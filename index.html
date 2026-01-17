@@ -1,25 +1,121 @@
-// 猫たちのデータ
-const cats = {
-  reia: { name: "レイア", pos: 0, power: "隠密" },
-  mitsune: { name: "ミツネ", pos: 0, power: "液体化" },
-  pekko: { name: "ペッコ", pos: 0, power: "先制攻撃" }
-};
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奥さんの隣、死守せよ！ - Web版プロトタイプ</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f4f8; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        
+        /* ボード（6マス） */
+        #board { display: flex; justify-content: center; gap: 10px; margin: 30px auto; max-width: 800px; }
+        .cell { width: 100px; height: 100px; border: 3px solid #ccc; background: white; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; position: relative; }
+        .cell.goal { border-color: #ff6b6b; background: #fff5f5; font-weight: bold; }
+        .cell.goal::after { content: '奥さんの枕元'; font-size: 10px; position: absolute; bottom: 5px; }
 
-// 山札（アクションカード）
-const deck = [
-  { name: "全力ダッシュ", move: 2 },
-  { name: "スルスル進む", move: 1 },
-  { name: "爪（主人回避）", effect: "block" },
-  { name: "主人の抱っこ", effect: "reset" } // これを引くとスタートに戻る！
-];
+        /* 猫の駒 */
+        .piece { width: 30px; height: 30px; border-radius: 50%; display: inline-block; position: absolute; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .reia { background: #5d4037; } /* サビ猫イメージ */
+        .mitsune { background: #8d6e63; } /* サビ猫イメージ */
+        .pekko { background: #333; border: 2px solid #fff; } /* ハチワレイメージ */
 
-// ドローして実行する関数
-function drawCard(catId) {
-  const card = deck[Math.floor(Math.random() * deck.length)];
-  console.log(`${cats[catId].name}は「${card.name}」を引いた！`);
-  
-  if (card.move) {
-    cats[catId].pos += card.move;
-    if (cats[catId].pos >= 6) console.log("ゴール！奥さんの隣だ！");
-  }
-}
+        /* 操作パネル */
+        .controls { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #eee; padding: 10px; font-size: 14px; text-align: left; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4dabf7; color: white; border: none; border-radius: 5px; margin: 5px; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>奥さんの隣、死守せよ！</h1>
+    <p>3匹を奥さんの枕元へ導け！</p>
+
+    <div id="board">
+        <div class="cell" id="cell0">主人の腕</div>
+        <div class="cell" id="cell1">廊下</div>
+        <div class="cell" id="cell2">リビング</div>
+        <div class="cell" id="cell3">ソファ</div>
+        <div class="cell" id="cell4">寝室</div>
+        <div class="cell" id="cell5">ベッド下</div>
+        <div class="cell goal" id="cell6">聖域</div>
+    </div>
+
+    <div class="controls">
+        <p id="turn-info">現在の手番: <span id="current-cat-name">???</span></p>
+        <button id="draw-btn" onclick="playTurn()">カードを引く</button>
+        <div class="log" id="log">ゲームスタート！</div>
+    </div>
+
+    <script>
+        const cats = [
+            { id: 'reia', name: 'レイア', pos: 0, class: 'reia', ability: '隠密' },
+            { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', ability: '液体化' },
+            { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', ability: '爪' }
+        ];
+
+        const deck = [
+            { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
+            { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
+            { name: '爪で抵抗', move: 0, msg: 'が爪を研いだ！（主人の連行を1回防ぐ想定）' },
+            { name: '主人の抱っこ', move: -99, msg: 'が主人に捕まった！スタートへ戻る！' },
+            { name: 'お尻トントン要求', move: 0, msg: 'がその場で足止め中。' }
+        ];
+
+        let currentCatIndex = 0;
+
+        function updateBoard() {
+            // 駒をリセット
+            document.querySelectorAll('.piece').forEach(p => p.remove());
+            // 駒を配置
+            cats.forEach(cat => {
+                const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
+                const piece = document.createElement('div');
+                piece.className = 'piece ' + cat.class;
+                // 重なり防止のオフセット
+                if (cat.id === 'mitsune') piece.style.top = '10px';
+                if (cat.id === 'pekko') piece.style.bottom = '10px';
+                cell.appendChild(piece);
+            });
+            document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
+        }
+
+        function playTurn() {
+            const cat = cats[currentCatIndex];
+            const card = deck[Math.floor(Math.random() * deck.length)];
+            const log = document.getElementById('log');
+
+            let message = `【${cat.name}】 ${card.name}: ${card.msg}`;
+            
+            if (card.move === -99) {
+                cat.pos = 0; // スタートへ
+            } else {
+                cat.pos += card.move;
+            }
+
+            // ログ更新
+            log.innerHTML = `<div>${message}</div>` + log.innerHTML;
+
+            if (cat.pos >= 6) {
+                cat.pos = 6;
+                alert(`${cat.name}の勝利！奥さんの隣を勝ち取りました！`);
+                resetGame();
+                return;
+            }
+
+            currentCatIndex = (currentCatIndex + 1) % cats.length;
+            updateBoard();
+        }
+
+        function resetGame() {
+            cats.forEach(c => c.pos = 0);
+            currentCatIndex = 0;
+            updateBoard();
+            document.getElementById('log').innerText = "再戦スタート！";
+        }
+
+        updateBoard();
+    </script>
+</body>
+</html>
