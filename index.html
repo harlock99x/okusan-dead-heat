@@ -25,6 +25,17 @@
         .log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #eee; padding: 10px; font-size: 14px; text-align: left; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4dabf7; color: white; border: none; border-radius: 5px; margin: 5px; }
         button:disabled { background: #ccc; }
+
+.piece { 
+    width: 45px;  /* 少し大きく */
+    height: 45px; 
+    border-radius: 50%; 
+    position: absolute; 
+    border: 2px solid white; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+        
     </style>
 </head>
 <body>
@@ -49,11 +60,11 @@
     </div>
 
     <script>
-        const cats = [
-            { id: 'reia', name: 'レイア', pos: 0, class: 'reia', ability: '隠密' },
-            { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', ability: '液体化' },
-            { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', ability: '爪' }
-        ];
+const cats = [
+    { id: 'reia', name: 'レイア', pos: 0, class: 'reia', img: 'reia.jpg' },
+    { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', img: 'mitsune.jpg' },
+    { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg' }
+];
 
         const deck = [
             { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
@@ -65,21 +76,27 @@
 
         let currentCatIndex = 0;
 
-        function updateBoard() {
-            // 駒をリセット
-            document.querySelectorAll('.piece').forEach(p => p.remove());
-            // 駒を配置
-            cats.forEach(cat => {
-                const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
-                const piece = document.createElement('div');
-                piece.className = 'piece ' + cat.class;
-                // 重なり防止のオフセット
-                if (cat.id === 'mitsune') piece.style.top = '10px';
-                if (cat.id === 'pekko') piece.style.bottom = '10px';
-                cell.appendChild(piece);
-            });
-            document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
-        }
+function updateBoard() {
+    document.querySelectorAll('.piece').forEach(p => p.remove());
+    
+    cats.forEach(cat => {
+        const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
+        const piece = document.createElement('div');
+        piece.className = 'piece ' + cat.class;
+        
+        // ★ここを書き換え：背景画像として猫の写真を設定
+        piece.style.backgroundImage = `url(${cat.img})`;
+        piece.style.backgroundSize = 'cover';
+        piece.style.backgroundPosition = 'center';
+        
+        // 重なり防止
+        if (cat.id === 'mitsune') piece.style.left = '5px';
+        if (cat.id === 'pekko') piece.style.right = '5px';
+        
+        cell.appendChild(piece);
+    });
+    document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
+}
 
         function playTurn() {
             const cat = cats[currentCatIndex];
