@@ -60,79 +60,62 @@
     </div>
 
     <script>
+
 const cats = [
-    { id: 'reia', name: 'レイア', pos: 0, class: 'reia', img: 'reia.jpg' },
-    { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', img: 'mitsune.jpg' },
-    { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg' }
+    { id: 'reia', name: 'レイア', pos: 0, class: 'reia', img: 'reia.jpg', type: 'wait' },
+    { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', img: 'mitsune.jpg', type: 'escape' },
+    { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg', type: 'attack' }
 ];
 
-        const deck = [
-            { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
-            { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
-            { name: '爪で抵抗', move: 0, msg: 'が爪を研いだ！（主人の連行を1回防ぐ想定）' },
-            { name: '主人の抱っこ', move: -99, msg: 'が主人に捕まった！スタートへ戻る！' },
-            { name: 'お尻トントン要求', move: 0, msg: 'がその場で足止め中。' }
-        ];
+const deck = [
+    { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
+    { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
+    { name: '秘密の抜け道', move: 3, msg: 'を発見！一気にショートカット！' },
+    { name: '主人の抱っこ', move: -99, msg: 'に捕まった！…が、脱出できるか？！' },
+    { name: '真夜中の大運動会', move: 0, msg: '発生！全員の場所がめちゃくちゃだ！', event: 'shuffle' },
+    { name: 'お尻トントン要求', move: 0, msg: 'がトントンを要求。主人は動けない！', event: 'stop' }
+];
 
-        let currentCatIndex = 0;
+function playTurn() {
+    const cat = cats[currentCatIndex];
+    const card = deck[Math.floor(Math.random() * deck.length)];
+    const log = document.getElementById('log');
+    let message = `【${cat.name}】 ${card.name}: ${card.msg}`;
 
-function updateBoard() {
-    document.querySelectorAll('.piece').forEach(p => p.remove());
+    // 特殊イベント処理
+    if (card.event === 'shuffle') {
+        cats.forEach(c => c.pos = Math.floor(Math.random() * 5));
+        message = "🏠 真夜中の大運動会！全員バラバラになった！";
+    } else if (card.move === -99) {
+        // キャラ別脱出判定
+        if (cat.type === 'escape' && Math.random() > 0.5) {
+            message = `【${cat.name}】 液体化！主人の腕をすり抜けた！`;
+        } else if (cat.type === 'attack' && Math.random() > 0.4) {
+            message = `【${cat.name}】 爪と咆哮！主人が怯んで逃げ切った！`;
+        } else {
+            cat.pos = 0;
+        }
+    } else {
+        cat.pos += card.move;
+    }
+
+    // レイアの追従能力（他の人が動いた時）
+    if (cat.id !== 'reia' && Math.random() > 0.7) {
+        cats.find(c => c.id === 'reia').pos += 1;
+        message += " (レイアもこっそりついてきた！)";
+    }
+
+    log.innerHTML = `<div>${message}</div>` + log.innerHTML;
     
-    cats.forEach(cat => {
-        const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
-        const piece = document.createElement('div');
-        piece.className = 'piece ' + cat.class;
-        
-        // ★ここを書き換え：背景画像として猫の写真を設定
-        piece.style.backgroundImage = `url(${cat.img})`;
-        piece.style.backgroundSize = 'cover';
-        piece.style.backgroundPosition = 'center';
-        
-        // 重なり防止
-        if (cat.id === 'mitsune') piece.style.left = '5px';
-        if (cat.id === 'pekko') piece.style.right = '5px';
-        
-        cell.appendChild(piece);
-    });
-    document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
-}
-
-        function playTurn() {
-            const cat = cats[currentCatIndex];
-            const card = deck[Math.floor(Math.random() * deck.length)];
-            const log = document.getElementById('log');
-
-            let message = `【${cat.name}】 ${card.name}: ${card.msg}`;
-            
-            if (card.move === -99) {
-                cat.pos = 0; // スタートへ
-            } else {
-                cat.pos += card.move;
-            }
-
-            // ログ更新
-            log.innerHTML = `<div>${message}</div>` + log.innerHTML;
-
-            if (cat.pos >= 6) {
-                cat.pos = 6;
-                alert(`${cat.name}の勝利！奥さんの隣を勝ち取りました！`);
-                resetGame();
-                return;
-            }
-
-            currentCatIndex = (currentCatIndex + 1) % cats.length;
-            updateBoard();
-        }
-
-        function resetGame() {
-            cats.forEach(c => c.pos = 0);
-            currentCatIndex = 0;
-            updateBoard();
-            document.getElementById('log').innerText = "再戦スタート！";
-        }
-
+    if (cat.pos >= 6) {
+        alert(`${cat.name}が奥さんの隣を占拠！勝利！`);
+        resetGame();
+    } else {
+        currentCatIndex = (currentCatIndex + 1) % cats.length;
         updateBoard();
+    }
+}
+        
     </script>
 </body>
 </html>
