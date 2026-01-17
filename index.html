@@ -3,45 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>奥さんの隣、死守せよ！ - Web版プロトタイプ</title>
+    <title>奥さんの隣、死守せよ！ - 決定版</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f4f8; text-align: center; margin: 0; padding: 20px; }
-        h1 { color: #333; margin-bottom: 10px; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf6e3; text-align: center; margin: 0; padding: 10px; color: #5d4037; }
+        h1 { font-size: 24px; margin-bottom: 5px; }
+        #board { display: flex; justify-content: center; gap: 5px; margin: 20px auto; max-width: 95%; overflow-x: auto; padding: 10px; }
+        .cell { min-width: 80px; height: 100px; border: 2px solid #d3c6aa; background: #fff; border-radius: 8px; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; position: relative; padding-bottom: 5px; }
+        .cell.goal { background: #ffe3e3; border: 2px solid #ff6b6b; font-weight: bold; }
         
-        /* ボード（6マス） */
-        #board { display: flex; justify-content: center; gap: 10px; margin: 30px auto; max-width: 800px; }
-        .cell { width: 100px; height: 100px; border: 3px solid #ccc; background: white; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; position: relative; }
-        .cell.goal { border-color: #ff6b6b; background: #fff5f5; font-weight: bold; }
-        .cell.goal::after { content: '奥さんの枕元'; font-size: 10px; position: absolute; bottom: 5px; }
+        .piece { 
+            width: 45px; height: 45px; border-radius: 50%; position: absolute; 
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background-size: cover; background-position: center; z-index: 10;
+            top: 10px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 1px 1px 2px black;
+        }
+        /* 画像がない時の予備色 */
+        .reia { background-color: #5d4037; }
+        .mitsune { background-color: #bcaaa4; }
+        .pekko { background-color: #333; }
 
-        /* 猫の駒 */
-        .piece { width: 30px; height: 30px; border-radius: 50%; display: inline-block; position: absolute; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .reia { background: #5d4037; } /* サビ猫イメージ */
-        .mitsune { background: #8d6e63; } /* サビ猫イメージ */
-        .pekko { background: #333; border: 2px solid #fff; } /* ハチワレイメージ */
-
-        /* 操作パネル */
-        .controls { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #eee; padding: 10px; font-size: 14px; text-align: left; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4dabf7; color: white; border: none; border-radius: 5px; margin: 5px; }
-        button:disabled { background: #ccc; }
-
-.piece { 
-    width: 45px;  /* 少し大きく */
-    height: 45px; 
-    border-radius: 50%; 
-    position: absolute; 
-    border: 2px solid white; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    z-index: 10;
-}
-        
+        .controls { background: white; padding: 15px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
+        .log { margin-top: 15px; height: 150px; overflow-y: scroll; background: #f8f9fa; padding: 10px; font-size: 13px; text-align: left; border: 1px solid #eee; border-radius: 8px; }
+        button { padding: 12px 24px; font-size: 18px; cursor: pointer; background: #859900; color: white; border: none; border-radius: 50px; width: 100%; transition: 0.2s; box-shadow: 0 4px #586e75; }
+        button:active { transform: translateY(3px); box-shadow: 0 1px #586e75; }
+        .status-bar { font-size: 14px; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h1>奥さんの隣、死守せよ！</h1>
-    <p>3匹を奥さんの枕元へ導け！</p>
 
     <div id="board">
         <div class="cell" id="cell0">主人の腕</div>
@@ -50,72 +41,109 @@
         <div class="cell" id="cell3">ソファ</div>
         <div class="cell" id="cell4">寝室</div>
         <div class="cell" id="cell5">ベッド下</div>
-        <div class="cell goal" id="cell6">聖域</div>
+        <div class="cell goal" id="cell6">奥さんの隣</div>
     </div>
 
     <div class="controls">
-        <p id="turn-info">現在の手番: <span id="current-cat-name">???</span></p>
-        <button id="draw-btn" onclick="playTurn()">カードを引く</button>
-        <div class="log" id="log">ゲームスタート！</div>
+        <div class="status-bar">次：<span id="current-cat-name">???</span></div>
+        <button id="draw-btn" onclick="playTurn()">カードを引くニャ！</button>
+        <div class="log" id="log">3匹とも準備万端だ！</div>
     </div>
 
     <script>
+        const cats = [
+            { id: 'reia', name: 'レイア', pos: 0, class: 'reia', img: 'reia.jpg', type: 'wait', label: 'レ' },
+            { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', img: 'mitsune.jpg', type: 'escape', label: 'ミ' },
+            { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg', type: 'attack', label: 'ペ' }
+        ];
 
-const cats = [
-    { id: 'reia', name: 'レイア', pos: 0, class: 'reia', img: 'reia.jpg', type: 'wait' },
-    { id: 'mitsune', name: 'ミツネ', pos: 0, class: 'mitsune', img: 'mitsune.jpg', type: 'escape' },
-    { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg', type: 'attack' }
-];
+        const deck = [
+            { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
+            { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
+            { name: '秘密の抜け道', move: 3, msg: 'を発見！一気にショートカット！' },
+            { name: '主人の抱っこ', move: -99, msg: 'に捕まった！' },
+            { name: '大運動会', move: 0, msg: '発生！全員の場所がめちゃくちゃだ！', event: 'shuffle' },
+            { name: 'おやつタイム', move: 0, msg: 'に主人が夢中！全員1進む！', event: 'bonus' }
+        ];
 
-const deck = [
-    { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
-    { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
-    { name: '秘密の抜け道', move: 3, msg: 'を発見！一気にショートカット！' },
-    { name: '主人の抱っこ', move: -99, msg: 'に捕まった！…が、脱出できるか？！' },
-    { name: '真夜中の大運動会', move: 0, msg: '発生！全員の場所がめちゃくちゃだ！', event: 'shuffle' },
-    { name: 'お尻トントン要求', move: 0, msg: 'がトントンを要求。主人は動けない！', event: 'stop' }
-];
+        let currentCatIndex = 0;
 
-function playTurn() {
-    const cat = cats[currentCatIndex];
-    const card = deck[Math.floor(Math.random() * deck.length)];
-    const log = document.getElementById('log');
-    let message = `【${cat.name}】 ${card.name}: ${card.msg}`;
+        function updateBoard() {
+            document.querySelectorAll('.piece').forEach(p => p.remove());
+            cats.forEach(cat => {
+                const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
+                const piece = document.createElement('div');
+                piece.className = `piece ${cat.class}`;
+                // 画像設定（エラー時は背景色のみ）
+                piece.style.backgroundImage = `url(${cat.img})`;
+                piece.innerText = cat.label; // 画像がない時のための名前一文字
 
-    // 特殊イベント処理
-    if (card.event === 'shuffle') {
-        cats.forEach(c => c.pos = Math.floor(Math.random() * 5));
-        message = "🏠 真夜中の大運動会！全員バラバラになった！";
-    } else if (card.move === -99) {
-        // キャラ別脱出判定
-        if (cat.type === 'escape' && Math.random() > 0.5) {
-            message = `【${cat.name}】 液体化！主人の腕をすり抜けた！`;
-        } else if (cat.type === 'attack' && Math.random() > 0.4) {
-            message = `【${cat.name}】 爪と咆哮！主人が怯んで逃げ切った！`;
-        } else {
-            cat.pos = 0;
+                // 重なり位置調整
+                if (cat.id === 'mitsune') piece.style.transform = 'translateX(-15px)';
+                if (cat.id === 'pekko') piece.style.transform = 'translateX(15px)';
+                
+                cell.appendChild(piece);
+            });
+            document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
         }
-    } else {
-        cat.pos += card.move;
-    }
 
-    // レイアの追従能力（他の人が動いた時）
-    if (cat.id !== 'reia' && Math.random() > 0.7) {
-        cats.find(c => c.id === 'reia').pos += 1;
-        message += " (レイアもこっそりついてきた！)";
-    }
+        function playTurn() {
+            const cat = cats[currentCatIndex];
+            const card = deck[Math.floor(Math.random() * deck.length)];
+            const log = document.getElementById('log');
+            let message = `<b>【${cat.name}】</b> ${card.name}`;
 
-    log.innerHTML = `<div>${message}</div>` + log.innerHTML;
-    
-    if (cat.pos >= 6) {
-        alert(`${cat.name}が奥さんの隣を占拠！勝利！`);
-        resetGame();
-    } else {
-        currentCatIndex = (currentCatIndex + 1) % cats.length;
-        updateBoard();
-    }
-}
-        
+            if (card.event === 'shuffle') {
+                cats.forEach(c => c.pos = Math.floor(Math.random() * 5));
+                message = "🏠 <b>運動会！</b> 全員バラバラになった！";
+            } else if (card.event === 'bonus') {
+                cats.forEach(c => c.pos = Math.min(c.pos + 1, 6));
+                message = "🍗 <b>おやつ！</b> 全員つられて1歩前進！";
+            } else if (card.move === -99) {
+                // 特殊能力チェック
+                if (cat.type === 'escape' && Math.random() > 0.5) {
+                    message += "…だが液体化して逃げ切った！";
+                } else if (cat.type === 'attack' && Math.random() > 0.4) {
+                    message += "…が、爪で抵抗して回避！";
+                } else {
+                    cat.pos = 0;
+                    message += "。スタートへ連行された…";
+                }
+            } else {
+                cat.pos += card.move;
+                message += card.msg;
+            }
+
+            // レイアの追従能力
+            if (cat.id !== 'reia' && Math.random() > 0.7) {
+                const reia = cats.find(c => c.id === 'reia');
+                reia.pos = Math.min(reia.pos + 1, 6);
+                message += " (レイアも便乗！)";
+            }
+
+            log.innerHTML = `<div>${message}</div>` + log.innerHTML;
+            
+            if (cat.pos >= 6) {
+                cat.pos = 6;
+                updateBoard();
+                setTimeout(() => {
+                    alert(`${cat.name}の勝利！奥さんの隣は渡さないニャ！`);
+                    resetGame();
+                }, 100);
+            } else {
+                currentCatIndex = (currentCatIndex + 1) % cats.length;
+                updateBoard();
+            }
+        }
+
+        function resetGame() {
+            cats.forEach(c => c.pos = 0);
+            currentCatIndex = 0;
+            updateBoard();
+            document.getElementById('log').innerText = "新しい夜が始まった…";
+        }
+
+        window.onload = updateBoard;
     </script>
 </body>
 </html>
