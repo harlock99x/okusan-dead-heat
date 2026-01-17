@@ -1,0 +1,25 @@
+// 猫たちのデータ
+const cats = {
+  reia: { name: "レイア", pos: 0, power: "隠密" },
+  mitsune: { name: "ミツネ", pos: 0, power: "液体化" },
+  pekko: { name: "ペッコ", pos: 0, power: "先制攻撃" }
+};
+
+// 山札（アクションカード）
+const deck = [
+  { name: "全力ダッシュ", move: 2 },
+  { name: "スルスル進む", move: 1 },
+  { name: "爪（主人回避）", effect: "block" },
+  { name: "主人の抱っこ", effect: "reset" } // これを引くとスタートに戻る！
+];
+
+// ドローして実行する関数
+function drawCard(catId) {
+  const card = deck[Math.floor(Math.random() * deck.length)];
+  console.log(`${cats[catId].name}は「${card.name}」を引いた！`);
+  
+  if (card.move) {
+    cats[catId].pos += card.move;
+    if (cats[catId].pos >= 6) console.log("ゴール！奥さんの隣だ！");
+  }
+}
