@@ -3,149 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>奥さんの隣、死守せよ！ - 躍動版</title>
+    <title>奥さんの隣、死守せよ！ - 戦略版</title>
     <style>
-        :root {
-            --primary-color: #859900;
-            --bg-color: #fdf6e3;
-            --cell-bg: #fff;
-            --text-color: #5d4037;
-        }
-
-        body { 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            background-color: var(--bg-color); 
-            text-align: center; 
-            margin: 0; 
-            padding: 10px; 
-            color: var(--text-color);
-            transition: background-color 0.3s;
-        }
-
-        h1 { font-size: 22px; margin: 10px 0; }
-
-        /* ボード：横スクロール対応 */
-        #board { 
-            display: flex; 
-            justify-content: flex-start; 
-            gap: 8px; 
-            margin: 20px auto; 
-            padding: 10px;
-            overflow-x: auto;
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .cell { 
-            min-width: 90px; 
-            height: 120px; 
-            border: 2px solid #d3c6aa; 
-            background: var(--cell-bg); 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: flex-end; 
-            justify-content: center; 
-            font-size: 11px; 
-            position: relative; 
-            padding-bottom: 8px;
-            flex-shrink: 0;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-        }
-
+        :root { --primary: #859900; --bg: #fdf6e3; --text: #5d4037; }
+        body { font-family: sans-serif; background-color: var(--bg); text-align: center; margin: 0; color: var(--text); overflow-x: hidden; }
+        
+        /* ボード */
+        #board { display: flex; justify-content: flex-start; gap: 8px; margin: 20px auto; padding: 10px; overflow-x: auto; }
+        .cell { min-width: 85px; height: 110px; border: 2px solid #d3c6aa; background: #fff; border-radius: 12px; display: flex; align-items: flex-end; justify-content: center; position: relative; flex-shrink: 0; }
         .cell.goal { background: #ffe3e3; border-color: #ff6b6b; font-weight: bold; }
 
-        /* 猫の駒：アニメーションを強化 */
-        .piece { 
-            width: 50px; height: 50px; 
-            border-radius: 50%; 
-            position: absolute; 
-            border: 3px solid white; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            background-size: cover; 
-            background-position: center; 
-            z-index: 10;
-            top: 15px;
-            /* ヌルヌル動く設定 */
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold; 
-            color: white; 
-            text-shadow: 1px 1px 2px black;
-        }
+        /* 駒 */
+        .piece { width: 45px; height: 45px; border-radius: 50%; position: absolute; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); background-size: cover; background-position: center; z-index: 10; top: 10px; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
+        .reia { background-color: #5d4037; } .mitsune { background-color: #bcaaa4; } .pekko { background-color: #333; }
 
-        .reia { background-color: #5d4037; }
-        .mitsune { background-color: #bcaaa4; }
-        .pekko { background-color: #333; }
+        /* キャラ選択画面 */
+        #setup-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .char-options { display: flex; gap: 15px; margin-top: 20px; }
+        .char-card { background: white; color: #333; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.2s; width: 80px; }
+        .char-card:hover { transform: scale(1.1); }
+        .char-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
 
-        /* 操作パネル */
-        .controls { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 20px; 
-            display: inline-block; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
-            width: 90%; 
-            max-width: 400px; 
-        }
+        /* 手札エリア */
+        #hand-container { fixed: bottom; background: #eee; padding: 10px; display: flex; justify-content: center; gap: 10px; border-top: 2px solid #ccc; position: fixed; bottom: 0; width: 100%; height: 100px; align-items: center; }
+        .card { background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 10px; width: 80px; height: 70px; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px #ccc; }
+        .card:active { transform: translateY(2px); box-shadow: none; }
+        .card b { font-size: 13px; display: block; margin-bottom: 4px; }
 
-        .status-bar { font-size: 16px; margin-bottom: 15px; font-weight: bold; }
-
-        button { 
-            padding: 15px; 
-            font-size: 20px; 
-            cursor: pointer; 
-            background: var(--primary-color); 
-            color: white; 
-            border: none; 
-            border-radius: 50px; 
-            width: 100%; 
-            box-shadow: 0 4px #586e75;
-            outline: none;
-        }
-        button:active { transform: translateY(2px); box-shadow: 0 2px #586e75; }
-        button:disabled { background: #ccc; box-shadow: none; }
-
-        .log { 
-            margin-top: 20px; 
-            height: 120px; 
-            overflow-y: scroll; 
-            background: #f8f9fa; 
-            padding: 10px; 
-            font-size: 13px; 
-            text-align: left; 
-            border-radius: 10px;
-            border: 1px inset #eee;
-        }
-
-        /* ポップアップ演出 */
-        #card-display {
-            position: fixed;
-            top: 45%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: white;
-            border: 5px solid var(--primary-color);
-            padding: 30px;
-            border-radius: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            z-index: 100;
-            pointer-events: none;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
+        #log { margin: 20px auto; width: 90%; height: 80px; overflow-y: scroll; background: #fff; padding: 10px; border-radius: 10px; font-size: 12px; text-align: left; margin-bottom: 120px; }
+        #card-display { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); background: white; border: 5px solid var(--primary); padding: 20px; border-radius: 20px; font-size: 24px; font-weight: bold; z-index: 100; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #card-display.show { transform: translate(-50%, -50%) scale(1.1); }
-
-        /* 捕まった時のエフェクト */
-        .danger-flash { background-color: #ffcccc !important; }
-
     </style>
 </head>
-<body id="main-body">
+<body>
+
+    <div id="setup-screen">
+        <h2>どの猫で遊ぶ？</h2>
+        <div class="char-options">
+            <div class="char-card" onclick="startGame(0)">
+                <div style="background:#5d4037; border-radius:50%; width:60px; height:60px; margin:auto"></div>
+                <p>レイア</p>
+            </div>
+            <div class="char-card" onclick="startGame(1)">
+                <div style="background:#bcaaa4; border-radius:50%; width:60px; height:60px; margin:auto"></div>
+                <p>ミツネ</p>
+            </div>
+            <div class="char-card" onclick="startGame(2)">
+                <div style="background:#333; border-radius:50%; width:60px; height:60px; margin:auto"></div>
+                <p>ペッコ</p>
+            </div>
+        </div>
+    </div>
 
     <h1>奥さんの隣、死守せよ！</h1>
-
     <div id="board">
         <div class="cell" id="cell0">主人の腕</div>
         <div class="cell" id="cell1">廊下</div>
@@ -156,13 +66,12 @@
         <div class="cell goal" id="cell6">奥さんの隣</div>
     </div>
 
-    <div class="controls">
-        <div class="status-bar">次：<span id="current-cat-name">???</span></div>
-        <button id="draw-btn" onclick="playTurn()">カードを引くニャ！</button>
-        <div class="log" id="log">平和な夜だ…</div>
-    </div>
+    <div id="log">キャラを選んでスタート！</div>
 
-    <div id="card-display">カード名</div>
+    <div id="hand-container">
+        </div>
+
+    <div id="card-display"></div>
 
     <script>
         const cats = [
@@ -171,116 +80,123 @@
             { id: 'pekko', name: 'ペッコ', pos: 0, class: 'pekko', img: 'pekko.jpg', type: 'attack', label: 'ペ' }
         ];
 
-        const deck = [
-            { name: '全力ダッシュ', move: 2, msg: 'が猛ダッシュ！' },
-            { name: 'スルスル進む', move: 1, msg: 'が忍び寄る。' },
-            { name: '抜け道発見', move: 3, msg: 'でショートカット！' },
-            { name: '主人の抱っこ', move: -99, msg: 'に捕まった！' },
-            { name: '大運動会', move: 0, msg: '発生！', event: 'shuffle' },
-            { name: 'おやつタイム', move: 0, msg: 'で全員前進！', event: 'bonus' }
+        const deckMaster = [
+            { name: '全力ダッシュ', move: 2, desc: '2歩進む' },
+            { name: '忍び足', move: 1, desc: '1歩進む' },
+            { name: '抜け道', move: 3, desc: '3歩進む' },
+            { name: '主人の抱っこ', move: -99, desc: 'スタートへ' },
+            { name: '運動会', event: 'shuffle', desc: '全員混乱' }
         ];
 
-        let currentCatIndex = 0;
+        let playerIndex = 0;
+        let currentTurnIndex = 0;
+        let playerHand = [];
         let isProcessing = false;
+
+        function startGame(idx) {
+            playerIndex = idx;
+            document.getElementById('setup-screen').style.display = 'none';
+            // 初期手札を3枚引く
+            for(let i=0; i<3; i++) playerHand.push(drawFromDeck());
+            updateBoard();
+            updateHandUI();
+            if (currentTurnIndex !== playerIndex) {
+                setTimeout(cpuTurn, 1000);
+            }
+        }
+
+        function drawFromDeck() {
+            return deckMaster[Math.floor(Math.random() * deckMaster.length)];
+        }
+
+        function updateHandUI() {
+            const container = document.getElementById('hand-container');
+            container.innerHTML = '';
+            playerHand.forEach((card, i) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.innerHTML = `<b>${card.name}</b><span>${card.desc}</span>`;
+                cardEl.onclick = () => playCard(i);
+                container.appendChild(cardEl);
+            });
+            // プレイヤーの番じゃない時は無効化
+            container.style.opacity = (currentTurnIndex === playerIndex) ? "1" : "0.5";
+            container.style.pointerEvents = (currentTurnIndex === playerIndex) ? "auto" : "none";
+        }
+
+        async function playCard(cardIdx) {
+            if (isProcessing) return;
+            const card = (currentTurnIndex === playerIndex) ? playerHand[cardIdx] : drawFromDeck();
+            await executeAction(card);
+            
+            if (currentTurnIndex === playerIndex) {
+                playerHand.splice(cardIdx, 1);
+                playerHand.push(drawFromDeck());
+            }
+            
+            nextTurn();
+        }
+
+        async function executeAction(card) {
+            isProcessing = true;
+            const cat = cats[currentTurnIndex];
+            const display = document.getElementById('card-display');
+            
+            display.innerText = card.name;
+            display.classList.add('show');
+            await new Promise(r => setTimeout(r, 800));
+            display.classList.remove('show');
+
+            let msg = `【${cat.name}】${card.name}`;
+            if (card.event === 'shuffle') {
+                cats.forEach(c => c.pos = Math.floor(Math.random() * 5));
+                msg += "！全員バラバラ！";
+            } else if (card.move === -99) {
+                if ((cat.type === 'escape' && Math.random() > 0.5) || (cat.type === 'attack' && Math.random() > 0.4)) {
+                    msg += "…を回避！";
+                } else {
+                    cat.pos = 0;
+                    msg += "。捕まった…";
+                }
+            } else {
+                cat.pos = Math.min(cat.pos + card.move, 6);
+            }
+
+            document.getElementById('log').innerHTML = `<div>${msg}</div>` + document.getElementById('log').innerHTML;
+            updateBoard();
+            
+            if (cat.pos >= 6) {
+                alert(cat.name + "の勝ち！");
+                location.reload();
+            }
+            isProcessing = false;
+        }
+
+        function nextTurn() {
+            currentTurnIndex = (currentTurnIndex + 1) % 3;
+            updateHandUI();
+            if (currentTurnIndex !== playerIndex) {
+                setTimeout(cpuTurn, 1200);
+            }
+        }
+
+        function cpuTurn() {
+            playCard(null); // CPUはランダム
+        }
 
         function updateBoard() {
             document.querySelectorAll('.piece').forEach(p => p.remove());
             cats.forEach(cat => {
-                const cell = document.getElementById('cell' + Math.min(cat.pos, 6));
-                const piece = document.createElement('div');
-                piece.className = `piece ${cat.class}`;
-                piece.style.backgroundImage = `url(${cat.img})`;
-                piece.innerText = cat.label;
-
-                // 重なり位置の微調整
+                const cell = document.getElementById('cell' + cat.pos);
+                const p = document.createElement('div');
+                p.className = `piece ${cat.class}`;
+                p.style.backgroundImage = `url(${cat.img})`;
+                p.innerText = (cat.pos === 0) ? "" : cat.label;
                 const offset = (cat.id === 'reia') ? -15 : (cat.id === 'pekko' ? 15 : 0);
-                piece.style.marginLeft = offset + 'px';
-                
-                cell.appendChild(piece);
+                p.style.marginLeft = offset + 'px';
+                cell.appendChild(p);
             });
-            document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
         }
-
-        async function playTurn() {
-            if (isProcessing) return;
-            isProcessing = true;
-            document.getElementById('draw-btn').disabled = true;
-
-            const cat = cats[currentCatIndex];
-            const card = deck[Math.floor(Math.random() * deck.length)];
-            const cardDisplay = document.getElementById('card-display');
-            const body = document.getElementById('main-body');
-
-            // 1. カード演出
-            cardDisplay.innerText = card.name;
-            cardDisplay.classList.add('show');
-
-            // 2. 捕まった時のフラッシュ
-            if (card.move === -99) {
-                body.classList.add('danger-flash');
-                setTimeout(() => body.classList.remove('danger-flash'), 500);
-            }
-
-            // 3. 演出時間待ち
-            await new Promise(resolve => setTimeout(resolve, 800));
-            cardDisplay.classList.remove('show');
-
-            // 4. ロジック適用
-            let message = `【${cat.name}】 ${card.name}`;
-
-            if (card.event === 'shuffle') {
-                cats.forEach(c => c.pos = Math.floor(Math.random() * 5));
-                message = "🏠 運動会だ！全員バラバラ！";
-            } else if (card.event === 'bonus') {
-                cats.forEach(c => c.pos = Math.min(c.pos + 1, 6));
-                message = "🍗 おやつ！全員釣られた！";
-            } else if (card.move === -99) {
-                if ((cat.type === 'escape' && Math.random() > 0.5) || (cat.type === 'attack' && Math.random() > 0.4)) {
-                    message += "…を華麗に回避！";
-                } else {
-                    cat.pos = 0;
-                    message += "。スタートへ…";
-                }
-            } else {
-                cat.pos = Math.min(cat.pos + card.move, 6);
-                message += card.msg;
-            }
-
-            // レイア便乗
-            if (cat.id !== 'reia' && Math.random() > 0.7) {
-                const reia = cats.find(c => c.id === 'reia');
-                reia.pos = Math.min(reia.pos + 1, 6);
-                message += " (レイアも便乗)";
-            }
-
-            // 5. 画面更新
-            updateBoard();
-            document.getElementById('log').innerHTML = `<div>${message}</div>` + document.getElementById('log').innerHTML;
-
-            // 6. 勝利判定
-            if (cat.pos >= 6) {
-                setTimeout(() => {
-                    alert(`${cat.name}の勝利！`);
-                    resetGame();
-                    isProcessing = false;
-                    document.getElementById('draw-btn').disabled = false;
-                }, 700);
-            } else {
-                currentCatIndex = (currentCatIndex + 1) % cats.length;
-                isProcessing = false;
-                document.getElementById('draw-btn').disabled = false;
-                document.getElementById('current-cat-name').innerText = cats[currentCatIndex].name;
-            }
-        }
-
-        function resetGame() {
-            cats.forEach(c => c.pos = 0);
-            currentCatIndex = 0;
-            updateBoard();
-            document.getElementById('log').innerText = "新しい夜が始まった…";
-        }
-
-        window.onload = updateBoard;
     </script>
 </body>
 </html>
